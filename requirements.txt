@@ -1,0 +1,23 @@
+# Zotero RAG Search System Requirements
+# Install with: pip install -r requirements.txt
+
+# Core machine learning and embeddings
+sentence-transformers>=2.2.2
+faiss-cpu>=1.7.4
+scikit-learn>=1.3.0
+numpy>=1.24.0
+
+# PDF processing
+PyPDF2>=3.0.1
+
+# Optional: GPU support for faster embeddings (uncomment if you have CUDA)
+# torch>=2.0.0
+# faiss-gpu>=1.7.4
+
+# System and utility packages (usually included with Python)
+# pathlib  # Built-in since Python 3.4
+# sqlite3  # Built-in
+# json     # Built-in
+# os       # Built-in
+# webbrowser # Built-in
+# argparse # Built-in

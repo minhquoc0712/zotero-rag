@@ -1,0 +1,131 @@
+name: Build Cross-Platform Executables
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            asset_name: zotero-rag-windows.exe
+            build_name: zotero-rag.exe
+          - os: ubuntu-latest
+            asset_name: zotero-rag-linux
+            build_name: zotero-rag
+          - os: macos-latest
+            asset_name: zotero-rag-macos
+            build_name: zotero-rag
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build with PyInstaller using spec file
+      run: |
+        python -m PyInstaller zotero-rag.spec
+
+    - name: Test executable (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        ./dist/zotero-rag.exe --help
+
+    - name: Test executable (Linux/macOS)
+      if: matrix.os != 'windows-latest'
+      run: |
+        chmod +x ./dist/zotero-rag
+        ./dist/zotero-rag --help
+
+    - name: Create archive (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        Compress-Archive -Path "dist/zotero-rag.exe", "LICENSE", "README.md" -DestinationPath "zotero-rag-windows.zip"
+
+    - name: Create archive (Linux)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        tar -czf zotero-rag-linux.tar.gz -C dist zotero-rag -C .. LICENSE README.md
+
+    - name: Create archive (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        tar -czf zotero-rag-macos.tar.gz -C dist zotero-rag -C .. LICENSE README.md
+
+    - name: Upload Windows artifact
+      if: matrix.os == 'windows-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: zotero-rag-windows
+        path: zotero-rag-windows.zip
+
+    - name: Upload Linux artifact
+      if: matrix.os == 'ubuntu-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: zotero-rag-linux
+        path: zotero-rag-linux.tar.gz
+
+    - name: Upload macOS artifact
+      if: matrix.os == 'macos-latest'
+      uses: actions/upload-artifact@v3
+      with:
+        name: zotero-rag-macos
+        path: zotero-rag-macos.tar.gz
+
+    - name: Upload to release (Windows)
+      if: github.event_name == 'release' && matrix.os == 'windows-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./zotero-rag-windows.zip
+        asset_name: zotero-rag-windows.zip
+        asset_content_type: application/zip
+
+    - name: Upload to release (Linux)
+      if: github.event_name == 'release' && matrix.os == 'ubuntu-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./zotero-rag-linux.tar.gz
+        asset_name: zotero-rag-linux.tar.gz
+        asset_content_type: application/gzip
+
+    - name: Upload to release (macOS)
+      if: github.event_name == 'release' && matrix.os == 'macos-latest'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./zotero-rag-macos.tar.gz
+        asset_name: zotero-rag-macos.tar.gz
+        asset_content_type: application/gzip 

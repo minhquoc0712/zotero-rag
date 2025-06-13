@@ -1,0 +1,32 @@
+# Include important files in the package
+include README.md
+include LICENSE
+include requirements.txt
+include MANIFEST.in
+include pyproject.toml
+include setup.cfg
+
+# Include package data
+recursive-include zotero_rag *.py
+recursive-include zotero_rag *.json
+recursive-include zotero_rag *.txt
+
+# Include tests
+recursive-include tests *.py
+
+# Include documentation
+recursive-include docs *.md *.rst *.txt
+
+# Exclude unnecessary files
+exclude .gitignore
+exclude .github/*
+exclude .pytest_cache/*
+exclude build/*
+exclude dist/*
+exclude *.egg-info/*
+exclude __pycache__/*
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * *.orig
+recursive-exclude * *.rej
+recursive-exclude * .DS_Store
